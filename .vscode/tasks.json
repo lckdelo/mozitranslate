@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run MoziTranslate",
+			"type": "shell",
+			"command": "cd backend && python run.py & cd frontend && npm run dev",
+			"group": "run",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

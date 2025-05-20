@@ -1,0 +1,43 @@
+# MoziTranslate Project Updates Log
+
+## Update Format Guidelines
+
+When adding a new update to this file, please follow this format:
+
+```
+## [YYYY-MM-DD] - Update Title
+
+### Category: [Backend/Frontend/Documentation/Infrastructure]
+
+#### Changes Made:
+- Description of change 1
+- Description of change 2
+- Description of change 3
+
+#### Reasons for Changes:
+Brief explanation of why these changes were necessary
+
+#### Impact on Project:
+How these changes affect the project's functionality, performance, etc.
+
+---
+```
+
+## Initial Updates
+
+### [2025-05-19] - Project Initialization
+
+#### Category: Documentation
+
+#### Changes Made:
+- Created initial project structure
+- Created comprehensive README.md with detailed task list
+- Established this update tracking document (att.txt)
+
+#### Reasons for Changes:
+Project kickoff requires clear documentation and planning to ensure smooth development process and team alignment.
+
+#### Impact on Project:
+Provides a clear roadmap for development and sets standards for project management and documentation.
+
+---
