@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 15, 23, 42;
+  --background-rgb: 241, 245, 249;
+  --primary-rgb: 59, 130, 246;
+  --primary-light-rgb: 219, 234, 254;
+  --accent-rgb: 14, 165, 233;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 241, 245, 249;
+    --background-rgb: 15, 23, 42;
+    --primary-rgb: 59, 130, 246;
+    --primary-light-rgb: 30, 58, 138;
+    --accent-rgb: 14, 165, 233;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+.min-h-screen-minus-header {
+  min-height: calc(100vh - 4rem);
+  padding: 1rem;
+}
+
+.split-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 768px) {
+  .split-view {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(var(--primary-light-rgb), 0.2);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--primary-rgb), 0.5);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--primary-rgb), 0.7);
+}
+
+/* Blue focus ring for better accessibility */
+*:focus {
+  outline: 2px solid rgba(var(--accent-rgb), 0.5);
+  outline-offset: 2px;
+}
