@@ -1,35 +1,35 @@
 # MoziTranslate
 
-MoziTranslate is an application that translates PDF pages in real-time as you read them. It features a split-screen interface with the original PDF on the left and the translated text on the right.
+MoziTranslate é uma aplicação que traduz páginas de PDF em tempo real enquanto você as lê. Ela possui uma interface dividida com o PDF original à esquerda e o texto traduzido à direita.
 
-## 🌟 Key Features
+## 🌟 Funcionalidades Principais
 
-- Real-time translation of PDF content using Google Translate's unofficial API
-- Split-screen interface: original PDF view and translated text
-- On-demand translation of the current page only
-- Multi-language support with 10+ languages available
-- Page navigation with keyboard shortcuts (arrow keys, Home/End)
-- Cached translations to improve performance
-- Preserved text formatting and indentation in translations
-- Responsive design for desktop and mobile devices (switches to tabs on mobile)
-- Dark/light mode support based on system preferences
+- Tradução em tempo real de conteúdo PDF usando a API não oficial do Google Translate
+- Interface dividida: visualização do PDF original e texto traduzido
+- Tradução sob demanda apenas da página atual
+- Suporte a múltiplos idiomas com mais de 10 idiomas disponíveis
+- Navegação por páginas com atalhos de teclado (setas, Home/End)
+- Traduções em cache para melhorar o desempenho
+- Formatação de texto e recuos preservados nas traduções
+- Design responsivo para dispositivos desktop e móveis (muda para abas em dispositivos móveis)
+- Suporte a modo claro/escuro baseado nas preferências do sistema
 
-## 🛠️ Technology Stack
+## 🛠️ Stack de Tecnologia
 
 ### Backend
-- Python with FastAPI
-- PyMuPDF (fitz) for PDF processing
-- Native urllib/json for translation requests
-- Uvicorn/Gunicorn as ASGI server
+- Python com FastAPI
+- PyMuPDF (fitz) para processamento de PDF
+- urllib/json nativo para requisições de tradução
+- Uvicorn/Gunicorn como servidor ASGI
 
 ### Frontend
-- Next.js with React
-- TypeScript for type safety
-- Tailwind CSS for styling
-- Custom React hooks for state management
-- Responsive layout
+- Next.js com React
+- TypeScript para segurança de tipos
+- Tailwind CSS para estilização
+- Hooks React personalizados para gerenciamento de estado
+- Layout responsivo
 
-## 📁 Project Structure
+## 📁 Estrutura do Projeto
 
 ```
 mozitranslate/
@@ -63,234 +63,147 @@ mozitranslate/
     └── frontend.md
 ```
 
-## 📋 Project Tasks
 
-### 0. Initial Setup
-- [x] Create Git repository
-- [ ] Configure virtual environments (venv or poetry)
-- [ ] Define code conventions (lint, formatter)
-- [ ] Create folder structure:
-  ```
-  /backend
-  /frontend
-  /docs
-  ```
+## 📝 Diretrizes de Desenvolvimento
+- Seguir PEP 8 para código Python
+- Usar ESLint e Prettier para JavaScript/TypeScript
+- Escrever testes para todas as novas funcionalidades
+- Documentar código com docstrings e comentários
+- Usar Git flow para gerenciamento de branches
 
-### 1. Backend Development
+## 🚀 Como Começar
 
-#### 1.1. Configuration and Dependencies
-- [ ] Initialize Python project in /backend
-- [ ] Create requirements.txt or pyproject.toml with:
-  - PyMuPDF (fitz)
-  - FastAPI
-  - Uvicorn/Gunicorn
-  - pytest for testing
-- [ ] Configure development server
+Esta seção fornece instruções detalhadas para configurar o MoziTranslate após clonar o repositório do GitHub.
 
-#### 1.2. Translation Module
-- [ ] Implement `translate(text, source_lang, target_lang)` function
-  - Use urllib and json libraries
-  - Add proper error handling and retry logic
-- [ ] Create text segmentation logic for long texts
-  - Implement character/word count limits
-  - Add appropriate delays between requests
-- [ ] Add request rate limiting to avoid IP blocks
-- [ ] Create translation cache to avoid redundant requests
+### Pré-requisitos
+- Python 3.8+ instalado
+- Node.js 14+ instalado
+- Gerenciador de pacotes npm ou yarn
+- Git
+- Conexão com a internet para a API de tradução
 
-#### 1.3. PDF Processing
-- [ ] Create PDF handling module with PyMuPDF
-- [ ] Implement page extraction with proper text positioning
-- [ ] Create functions to:
-  - Extract text with positioning data
-  - Convert page to image for display
-  - Preserve original text layout and indentation
-
-#### 1.4. API Endpoints
-- [ ] Create `/pdf/upload` endpoint for PDF reception and storage
-  - Implement secure file validation
-  - Generate document ID for reference
-- [ ] Create `/pdf/{doc_id}/page/{page_number}` endpoint
-  - Extract and return page image
-  - Extract, translate and return formatted text
-- [ ] Implement caching system for translated pages
-- [ ] Add error handling and validation
-- [ ] Create API documentation with Swagger/OpenAPI
-
-#### 1.5. Testing
-- [ ] Write unit tests for translation module
-- [ ] Write unit tests for PDF processing
-- [ ] Create integration tests for API endpoints
-- [ ] Implement performance tests and optimizations
-
-### 2. Frontend Development
-
-#### 2.1. Setup and Structure
-- [ ] Initialize Next.js project in /frontend
-- [ ] Configure Tailwind CSS and dark mode
-- [ ] Create basic layout components
-- [ ] Setup state management solution
-
-#### 2.2. PDF Viewer (Left Panel)
-- [ ] Create `<PdfViewer />` component
-  - Implement page rendering
-  - Add zoom controls
-- [ ] Add navigation controls (next/previous page)
-- [ ] Create loading states and error handling
-- [ ] Implement page tracking to trigger translations
-
-#### 2.3. Translation Panel (Right Panel)
-- [ ] Create `<TranslatedText />` component
-  - Display translated text with preserved formatting
-  - Implement syntax highlighting if needed
-- [ ] Add loading indicators during translation
-- [ ] Create error states for failed translations
-
-#### 2.4. Application State Management
-- [ ] Implement React Context or state manager
-  - Track current page
-  - Manage translation cache
-  - Handle document state
-- [ ] Create effect hooks to trigger translation on page change
-- [ ] Implement optimistic UI updates
-
-#### 2.5. UI/UX Refinement
-- [ ] Design responsive layout
-  - 50/50 split on desktop
-  - Tab-based navigation on mobile
-- [ ] Implement dark/light mode
-- [ ] Add accessibility features
-- [ ] Create proper loading/error states
-- [ ] Polish typography and spacing
-
-### 3. Testing and Deployment
-
-#### 3.1. Backend Testing and Deployment
-- [ ] Complete unit and integration tests
-- [ ] Set up CI pipeline with GitHub Actions
-- [ ] Prepare deployment configurations
-- [ ] Deploy to selected platform (Heroku/AWS/DigitalOcean)
-
-#### 3.2. Frontend Testing and Deployment
-- [ ] Write component and integration tests
-- [ ] Set up CI pipeline
-- [ ] Optimize build for production
-- [ ] Deploy to Vercel/Netlify
-
-#### 3.3. Integration and E2E Testing
-- [ ] Create end-to-end tests
-- [ ] Perform cross-browser testing
-- [ ] Test on various devices and screen sizes
-
-## 📝 Development Guidelines
-- Follow PEP 8 for Python code
-- Use ESLint and Prettier for JavaScript/TypeScript
-- Write tests for all new features
-- Document code with docstrings and comments
-- Use Git flow for branch management
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Python 3.8+ installed
-- Node.js 14+ installed
-- npm or yarn package manager
-- Internet connection for translation API
-
-### Backend Setup
+### Passo 1: Clonar o Repositório
 ```bash
-# Navigate to backend directory
+# Clonar o repositório
+git clone https://github.com/lckdelo/mozitranslate.git
+
+# Navegar para o diretório do projeto
+cd mozitranslate
+```
+
+### Passo 2: Configuração do Backend
+```bash
+# Navegar para o diretório do backend
 cd backend
 
-# Create a virtual environment
+# Criar um ambiente virtual
 python -m venv venv
 
-# Activate the virtual environment
-# On Windows:
+# Ativar o ambiente virtual
+# No Windows:
 venv\Scripts\activate
-# On Unix/MacOS:
+# No Unix/MacOS:
 source venv/bin/activate
 
-# Install dependencies
+# Instalar dependências
 pip install -r requirements.txt
 
-# Start the backend server
+# Iniciar o servidor backend
 python run.py
-# or alternatively (Recommended):
-uvicorn main:app --reload --port 8000
 ```
 
-The backend API will be available at http://localhost:8000
+A API do backend estará disponível em http://localhost:8000. Você também pode acessar a documentação da API em http://localhost:8000/docs
 
-### Frontend Setup
+### Passo 3: Configuração do Frontend
+Abra uma nova janela de terminal (mantenha o backend em execução no terminal anterior)
+
 ```bash
-# Navigate to frontend directory
-cd frontend
+# Navegue até a raiz do projeto e depois para o diretório frontend
+cd mozitranslate/frontend
+# Ou se você já estiver na raiz do projeto:
+# cd frontend
 
-# Install dependencies
+# Instalar dependências
 npm install
-# or if you're using yarn:
-# yarn install
 
-# Start the development server
+# Iniciar o servidor de desenvolvimento
 npm run dev
-# or with yarn:
-# yarn dev
 ```
 
-The frontend application will be available at http://localhost:3000
+A aplicação frontend estará disponível em http://localhost:3000
 
-### Running Both at Once
-You can run both the backend and frontend in separate terminal windows using the commands above.
+### Executando Ambos em Modo de Desenvolvimento
+Para a melhor experiência de desenvolvimento:
 
-For Windows PowerShell users, you can use this command to run both:
+**Opção 1: Usar janelas de terminal separadas (Recomendado)**
+- Terminal 1: Execute o servidor backend
+- Terminal 2: Execute o servidor de desenvolvimento frontend
+
+**Opção 2: Para usuários de Windows PowerShell**
 ```powershell
-Start-Process powershell -ArgumentList "cd $PWD/backend; python run.py" -NoNewWindow; cd frontend; npm run dev
+# Do diretório raiz do projeto
+Start-Process powershell -ArgumentList "cd $PWD/backend; .\venv\Scripts\activate; python run.py" -NoNewWindow
+cd frontend
+npm run dev
 ```
 
-For Windows Command Prompt or Unix-like systems, open two terminal windows and run the backend and frontend separately.
+**Opção 3: Usar um gerenciador de processos como PM2**
+Se você trabalha frequentemente no projeto, considere configurar um gerenciador de processos como o PM2 para gerenciar ambos os serviços.
 
-### Test Your Installation
-1. Open your browser and navigate to http://localhost:3000
-2. Upload a PDF file using the upload interface
-3. The document should appear with the original PDF on the left and the translated text on the right
-4. Use navigation buttons to move through pages and change languages
+### Solucionando Problemas Comuns de Instalação
 
-## 📘 Usage Guide
+#### Problemas no Backend
+- **Erros de módulo não encontrado**: Certifique-se de ter ativado o ambiente virtual e instalado todas as dependências
+- **Porta já em uso**: Se a porta 8000 já estiver sendo usada, modifique `run.py` para usar uma porta diferente
+- **Erros de processamento de PDF**: Garanta que o PyMuPDF esteja corretamente instalado com `pip install pymupdf`
 
-### Upload a PDF
-1. On the home page, click on the upload area or drag and drop a PDF file
-2. Wait for the upload to complete and processing to finish
+#### Problemas no Frontend
+- **Erros de módulos Node**: Exclua a pasta `node_modules` e o arquivo `package-lock.json`, então execute `npm install` novamente
+- **Erros de CORS**: Certifique-se de que o backend está rodando e verifique se as URLs da API no código frontend correspondem à porta do backend
+- **Erros de build**: Certifique-se de ter uma versão compatível do Node.js (14+)
 
-### Navigate Through Pages
-- Use the navigation buttons (◀ ▶) to move between pages
-- Click on the first (⟪) or last (⟫) page buttons to jump to the beginning or end
-- Enter a specific page number in the input field and press Enter
-- Use keyboard shortcuts (see below)
+### Verificando Sua Instalação
+1. Abra seu navegador e acesse http://localhost:3000
+2. Faça upload de um arquivo PDF usando a interface de upload
+3. O documento deve aparecer com o PDF original à esquerda e o texto traduzido à direita
+4. Use os botões de navegação para mover-se pelas páginas e mudar idiomas
 
-### Change Translation Language
-1. Click on the language button at the top of the control bar
-2. Select your desired target language from the dropdown menu
-3. The current page will be automatically re-translated to the new language
+## 📘 Guia de Uso
 
-### Mobile Usage
-- On mobile devices, use the tabs at the top to switch between the original PDF view and the translated text
-- All other features work the same as on desktop
+### Enviar um PDF
+1. Na página inicial, clique na área de upload ou arraste e solte um arquivo PDF
+2. Aguarde o upload completar e o processamento terminar
 
-### Keyboard Shortcuts
-- `→` or `Page Down`: Next page
-- `←` or `Page Up`: Previous page
-- `Home`: Jump to first page
-- `End`: Jump to last page
-- `Ctrl + 1-9`: Jump to a percentage of the document (e.g., Ctrl+5 jumps to the middle)
+### Navegar pelas Páginas
+- Use os botões de navegação (◀ ▶) para mover-se entre as páginas
+- Clique nos botões de primeira (⟪) ou última (⟫) página para pular para o início ou fim
+- Digite um número de página específico no campo de entrada e pressione Enter
+- Use atalhos de teclado (veja abaixo)
 
-### Troubleshooting
-- If you encounter CORS issues, ensure the backend is running on port 8000
-- If translations fail, check your internet connection as the app uses Google Translate
-- Make sure you have the latest dependencies installed
-- For PDF rendering issues, try with a different PDF file as some complex layouts might not render correctly
+### Alterar o Idioma de Tradução
+1. Clique no botão de idioma na parte superior da barra de controle
+2. Selecione o idioma de destino desejado no menu suspenso
+3. A página atual será automaticamente retraduzida para o novo idioma
 
-## 📊 Performance Considerations
-- The application uses caching for translated pages to avoid redundant API calls
-- PDF pages are only loaded when needed to improve performance
-- Translation requests are rate-limited to avoid API blocking
-- Image rendering is optimized for most common PDF formats
+### Uso em Dispositivos Móveis
+- Em dispositivos móveis, use as abas no topo para alternar entre a visualização do PDF original e o texto traduzido
+- Todas as outras funcionalidades funcionam da mesma forma que no desktop
+
+### Atalhos de Teclado
+- `→` ou `Page Down`: Próxima página
+- `←` ou `Page Up`: Página anterior
+- `Home`: Pular para a primeira página
+- `End`: Pular para a última página
+- `Ctrl + 1-9`: Pular para uma porcentagem do documento (ex: Ctrl+5 pula para o meio)
+
+### Solução de Problemas
+- Se encontrar problemas de CORS, certifique-se de que o backend está rodando na porta 8000
+- Se as traduções falharem, verifique sua conexão com a internet, pois o aplicativo usa o Google Translate
+- Certifique-se de ter as dependências mais recentes instaladas
+- Para problemas de renderização de PDF, tente com um arquivo PDF diferente, pois alguns layouts complexos podem não ser renderizados corretamente
+
+## 📊 Considerações de Desempenho
+- A aplicação utiliza cache para páginas traduzidas para evitar chamadas redundantes da API
+- As páginas do PDF são carregadas apenas quando necessário para melhorar o desempenho
+- As solicitações de tradução são limitadas para evitar bloqueio da API
+- A renderização de imagens é otimizada para os formatos de PDF mais comuns
