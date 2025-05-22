@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import os
+import traceback
 from typing import Dict, Optional
 
 # Import local modules
@@ -100,9 +101,24 @@ async def get_page(
                 detail=f"Invalid page number. Must be between 1 and {total_pages}"
             )
         
-        # Render page to image
-        page_image = render_page_to_image(doc_id, page_number)
+        # Render page to image - Try multiple times if necessary
+        max_attempts = 3
+        page_image = None
+        last_error = None
         
+        for attempt in range(max_attempts):
+            try:
+                page_image = render_page_to_image(doc_id, page_number)
+                break  # If successful, exit the loop
+            except Exception as e:
+                last_error = str(e)
+                # Wait a bit before retrying
+                import time
+                time.sleep(0.5)
+                
+        if page_image is None:
+            raise PDFProcessingError(f"Failed to render page after {max_attempts} attempts: {last_error}")
+            
         # Extract text from page
         original_text = extract_text_from_page(doc_id, page_number)
         
@@ -137,6 +153,9 @@ async def get_page(
         # Re-raise HTTP exceptions
         raise
     except Exception as e:
+        # Log the full exception for debugging
+        print(f"Error processing page {page_number}:")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to process page: {str(e)}")
 
 @app.delete("/pdf/{doc_id}")

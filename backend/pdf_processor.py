@@ -6,8 +6,14 @@ import os
 import fitz  # PyMuPDF
 import base64
 import tempfile
+import logging
 from typing import Dict, List, Optional, Tuple, Any
 from uuid import uuid4
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("pdf_processor")
 
 # Store open documents with their IDs for reuse
 _open_documents: Dict[str, Tuple[fitz.Document, str]] = {}
@@ -36,11 +42,13 @@ def open_pdf(file_path: str) -> Tuple[str, fitz.Document]:
             doc_id = str(uuid4())
             # Store the document for future reference
             _open_documents[doc_id] = (document, file_path)
+            logger.info(f"PDF opened successfully: {file_path} (ID: {doc_id}, {len(document)} pages)")
             return doc_id, document
         else:
             document.close()
             raise PDFProcessingError("The file is not a valid PDF")
     except Exception as e:
+        logger.error(f"Failed to open PDF: {str(e)}")
         raise PDFProcessingError(f"Failed to open PDF file: {str(e)}")
 
 def get_document(doc_id: str) -> fitz.Document:
@@ -58,6 +66,8 @@ def get_document(doc_id: str) -> fitz.Document:
     """
     if doc_id in _open_documents:
         return _open_documents[doc_id][0]
+    
+    logger.error(f"Document with ID {doc_id} not found")
     raise PDFProcessingError(f"Document with ID {doc_id} not found")
 
 def close_document(doc_id: str) -> None:
@@ -74,7 +84,9 @@ def close_document(doc_id: str) -> None:
         document, _ = _open_documents[doc_id]
         document.close()
         del _open_documents[doc_id]
+        logger.info(f"Document closed: {doc_id}")
     else:
+        logger.error(f"Document with ID {doc_id} not found for closing")
         raise PDFProcessingError(f"Document with ID {doc_id} not found")
 
 def save_uploaded_pdf(file_content: bytes) -> Tuple[str, str]:
@@ -100,11 +112,14 @@ def save_uploaded_pdf(file_content: bytes) -> Tuple[str, str]:
         with open(file_path, "wb") as f:
             f.write(file_content)
         
+        logger.info(f"PDF saved to temporary file: {file_path}")
+        
         # Open the PDF and get its ID
         doc_id, _ = open_pdf(file_path)
         
         return doc_id, file_path
     except Exception as e:
+        logger.error(f"Failed to save uploaded PDF: {str(e)}")
         raise PDFProcessingError(f"Failed to save uploaded PDF: {str(e)}")
 
 def get_page_count(doc_id: str) -> int:
@@ -145,10 +160,23 @@ def render_page_to_image(doc_id: str, page_number: int, zoom: float = 2.0) -> st
         page_idx = page_number - 1
         
         if page_idx < 0 or page_idx >= len(document):
+            logger.error(f"Invalid page number {page_number} (document has {len(document)} pages)")
             raise PDFProcessingError(f"Invalid page number {page_number}")
         
-        page = document[page_idx]
+        logger.info(f"Rendering page {page_number} of document {doc_id}")
         
+        try:
+            page = document[page_idx]
+        except Exception as e:
+            logger.error(f"Error accessing page {page_number}: {str(e)}")
+            # Try to reopen the document if page access fails
+            file_path = _open_documents[doc_id][1]
+            logger.info(f"Attempting to reopen document from {file_path}")
+            document.close()
+            document = fitz.open(file_path)
+            _open_documents[doc_id] = (document, file_path)
+            page = document[page_idx]
+            
         # Create a pixmap with higher resolution for better quality
         matrix = fitz.Matrix(zoom, zoom)
         pixmap = page.get_pixmap(matrix=matrix, alpha=False)
@@ -157,8 +185,12 @@ def render_page_to_image(doc_id: str, page_number: int, zoom: float = 2.0) -> st
         png_bytes = pixmap.tobytes("png")
         base64_image = base64.b64encode(png_bytes).decode('utf-8')
         
+        logger.info(f"Successfully rendered page {page_number}")
         return base64_image
     except Exception as e:
+        logger.error(f"Failed to render page {page_number}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise PDFProcessingError(f"Failed to render page {page_number}: {str(e)}")
 
 def extract_text_from_page(doc_id: str, page_number: int) -> str:
@@ -184,12 +216,22 @@ def extract_text_from_page(doc_id: str, page_number: int) -> str:
         if page_idx < 0 or page_idx >= len(document):
             raise PDFProcessingError(f"Invalid page number {page_number}")
         
-        page = document[page_idx]
-        
+        try:
+            page = document[page_idx]
+        except Exception as e:
+            logger.error(f"Error accessing page {page_number} for text extraction: {str(e)}")
+            # Try to reopen the document if page access fails
+            file_path = _open_documents[doc_id][1]
+            document.close()
+            document = fitz.open(file_path)
+            _open_documents[doc_id] = (document, file_path)
+            page = document[page_idx]
+            
         # Extract text with format data to better preserve layout
         text = page.get_text("text")
         return text
     except Exception as e:
+        logger.error(f"Failed to extract text from page {page_number}: {str(e)}")
         raise PDFProcessingError(f"Failed to extract text from page {page_number}: {str(e)}")
 
 def extract_structured_text(doc_id: str, page_number: int) -> Dict[str, Any]:
@@ -221,4 +263,5 @@ def extract_structured_text(doc_id: str, page_number: int) -> Dict[str, Any]:
         dict_text = page.get_text("dict")
         return dict_text
     except Exception as e:
+        logger.error(f"Failed to extract structured text from page {page_number}: {str(e)}")
         raise PDFProcessingError(f"Failed to extract structured text from page {page_number}: {str(e)}")

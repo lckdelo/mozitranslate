@@ -33,7 +33,7 @@ const usePdfTranslation = (
   const [pagesInQueue, setPagesInQueue] = useState<number[]>([]);
   
   // Cache translated pages to avoid re-fetching
-  // Use a key that combines page number and target language
+  // Use a key that combines page number, source language and target language
   const [cache, setCache] = useState<Record<string, PageData>>({});
 
   // Initialize document and load first page
@@ -47,6 +47,7 @@ const usePdfTranslation = (
       }
     }
   }, [docId]); // Only run when docId changes
+
   // Prefetch a page in background without displaying it
   const prefetchPage = useCallback(
     async (pageNumber: number) => {
@@ -98,28 +99,27 @@ const usePdfTranslation = (
         setError('No document selected');
         setIsLoading(false);
         return;
-      }      // Always fetch the translation for the current page
-      // This ensures translation is updated for each page
-      // We'll keep this commented out in case we want to enable caching in the future
-      /*
-      if (cache[pageNumber]) {
-        setPageData(cache[pageNumber]);
+      }
+
+      // Generate a cache key that includes the language configuration
+      const cacheKey = `${pageNumber}-${sourceLang}-${targetLang}`;
+      
+      // Check if this page is already in cache
+      if (cache[cacheKey]) {
+        setPageData(cache[cacheKey]);
         setIsLoading(false);
         
         // Pre-fetch next page if possible
-        const nextPage = pageNumber + 1;
-        if (nextPage <= (cache[pageNumber]?.total_pages || 0)) {
-          prefetchPage(nextPage);
+        if (pageNumber < (cache[cacheKey]?.total_pages || 0)) {
+          prefetchPage(pageNumber + 1);
         }
         return;
       }
-      */
 
       setIsLoading(true);
-      setError(null);      try {
-        // Generate a cache key that includes the language configuration
-        const cacheKey = `${pageNumber}-${sourceLang}-${targetLang}`;
-        
+      setError(null);
+      
+      try {
         const response = await axios.get(
           `http://localhost:8000/pdf/${docId}/page/${pageNumber}`,
           {
@@ -152,8 +152,14 @@ const usePdfTranslation = (
         setIsLoading(false);
       }
     },
-    [docId, cache, prefetchPage]
-  );  // Create a dependency array that includes the language settings
+    [docId, cache, prefetchPage, sourceLang, targetLang]
+  );
+
+  // Reset cache when languages change
+  useEffect(() => {
+    resetCache();
+  }, [sourceLang, targetLang]);
+
   const resetCache = useCallback(() => {
     setCache({});
   }, []);
