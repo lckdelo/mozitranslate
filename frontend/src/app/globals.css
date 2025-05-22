@@ -20,14 +20,27 @@
   }
 }
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;  /* Controle de overflow apenas no nível raiz */
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
+  display: flex;
+  flex-direction: column;
 }
 
 .min-h-screen-minus-header {
-  min-height: calc(100vh - 4rem);
-  padding: 1rem;
+  height: calc(100vh - 5rem);
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .split-view {
@@ -65,4 +78,126 @@ body {
 *:focus {
   outline: 2px solid rgba(var(--accent-rgb), 0.5);
   outline-offset: 2px;
+}
+
+/* Utility classes for responsive layout */
+.upload-container {
+  min-height: 0;
+  flex-shrink: 0;
+}
+
+.content-wrapper {
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Compact layout adjustments */
+@media (max-height: 700px) {
+  .min-h-screen-minus-header {
+    padding: 0.25rem;
+  }
+}
+
+@media (max-height: 600px) {
+  .upload-container {
+    transform: scale(0.9);
+    transform-origin: center;
+  }
+}
+
+/* Corrigir visualização e barras de rolagem */
+html, body {
+  height: 100%;
+  overflow: hidden;  /* Controle de overflow apenas no nível raiz */
+}
+
+/* Permitir rolagem apenas onde necessário */
+.overflow-container {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch; /* Para iOS */
+}
+
+/* Estilos específicos para a visualização de PDF */
+.pdf-container {
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Assegura que as barras de rolagem apareçam quando necessário */
+.overflow-auto {
+  overflow: auto !important;
+  scrollbar-width: thin; /* Para Firefox */
+}
+
+/* Ajustes específicos para o container de visualização do PDF */
+.pdf-content {
+  min-height: 300px;
+  height: auto;
+  width: 100%;
+  position: relative;
+}
+
+/* Garante altura mínima para conteúdo */
+.min-content-height {
+  min-height: 300px;
+}
+
+/* Ajuste responsivo para telas pequenas */
+@media (max-height: 500px) {
+  .min-content-height {
+    min-height: 200px;
+  }
+}
+
+/* Melhorias para o visualizador de PDF */
+.pdf-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.pdf-viewer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-page {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Garantir que todos os containers flex lidem corretamente com o overflow */
+.flex-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.flex-item {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Ajustes de mídia para telas menores */
+@media (max-height: 500px) {
+  .navigation-controls {
+    padding: 0.25rem !important;
+  }
+  
+  .control-buttons {
+    transform: scale(0.85);
+    transform-origin: center;
+  }
 }

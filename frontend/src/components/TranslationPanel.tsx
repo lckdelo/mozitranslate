@@ -284,11 +284,10 @@ const TranslationPanel: React.FC<TranslationPanelProps> = ({
               <span className="font-semibold bg-secondary-100 dark:bg-secondary-900/30 px-2 py-0.5 rounded">{translatedText.length}</span>
             </div>
           </div>
-          
-          {/* Text content */}
+            {/* Text content */}
           <div 
             ref={contentRef}
-            className="flex-1 bg-neutral-50 dark:bg-neutral-900 rounded-xl p-6 overflow-auto min-h-[500px] border border-neutral-200 dark:border-neutral-700 shadow-inner"
+            className="flex-1 bg-neutral-50 dark:bg-neutral-900 rounded-xl p-4 overflow-auto min-h-0 border border-neutral-200 dark:border-neutral-700 shadow-inner"
             style={{ fontSize: `${fontSize}px` }}
             onMouseUp={handleTextSelection}
             onTouchEnd={handleTextSelection}

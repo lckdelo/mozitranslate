@@ -239,11 +239,10 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
         </div>
       </div>
       
-      {/* Main content area */}
-      <div 
+      {/* Main content area */}      <div 
         ref={containerRef}
         className={`
-          relative flex-1 overflow-hidden bg-neutral-50 dark:bg-neutral-900 rounded-lg 
+          relative flex-1 min-h-0 overflow-hidden bg-neutral-50 dark:bg-neutral-900 rounded-lg 
           border border-neutral-200 dark:border-neutral-700 shadow-md 
           transition-all duration-300 ease-out
           ${showFullScreenImage ? 'fixed inset-4 z-50' : ''}
@@ -272,34 +271,31 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           <div className="bg-white/90 dark:bg-neutral-800/90 px-4 py-2 rounded-full shadow-lg">
             <span className="font-medium text-neutral-800 dark:text-white">{pageNumber} / {totalPages}</span>
           </div>
-        </div>
-
-        {isLoading ? (
-          <div className="flex flex-col justify-center items-center h-[600px] gap-4">
-            <div className="relative w-16 h-16">
-              <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-primary-900"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary-600 dark:border-t-primary-400 animate-spin"></div>
+        </div>        {isLoading ? (
+          <div className="flex flex-col justify-center items-center min-h-[400px] h-full gap-4">
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 rounded-full border-3 border-primary-200 dark:border-primary-900"></div>
+              <div className="absolute inset-0 rounded-full border-3 border-transparent border-t-primary-600 dark:border-t-primary-400 animate-spin"></div>
             </div>
             <p className="text-primary-700 dark:text-primary-300 font-medium animate-pulse">
               Carregando página {pageNumber} de {totalPages}...
             </p>
           </div>
         ) : pageImage ? (
-          <div className="relative h-full" ref={viewportRef}>
+          <div className="relative h-full flex-1 min-h-0 pdf-viewer overflow-auto" ref={viewportRef}>
             {imgLoading && (
               <div className="absolute inset-0 flex justify-center items-center bg-neutral-50 dark:bg-neutral-900 z-10">
-                <div className="relative w-16 h-16">
-                  <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-primary-900"></div>
-                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary-600 dark:border-t-primary-400 animate-spin"></div>
+                <div className="relative w-12 h-12">
+                  <div className="absolute inset-0 rounded-full border-3 border-primary-200 dark:border-primary-900"></div>
+                  <div className="absolute inset-0 rounded-full border-3 border-transparent border-t-primary-600 dark:border-t-primary-400 animate-spin"></div>
                 </div>
               </div>
             )}
-            <div className="flex justify-center min-h-[600px] p-4 overflow-auto h-full">
+            <div className="flex justify-center items-center p-2 overflow-auto min-h-[400px] h-full pdf-page">
               <img
                 ref={imgRef}
                 src={`data:image/png;base64,${pageImage}`}
-                alt={`PDF página ${pageNumber}`}
-                className="max-w-full object-contain transition-all duration-300 ease-out"
+                alt={`PDF página ${pageNumber}`}                className="max-w-full max-h-full h-auto w-auto object-contain transition-all duration-300 ease-out"
                 style={{ 
                   transform: `scale(${zoomLevel}) translate(${pan.x}px, ${pan.y}px) rotate(${rotationDegree}deg)`,
                   transformOrigin: 'center center',

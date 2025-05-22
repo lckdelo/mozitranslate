@@ -21,6 +21,7 @@ const TranslatedView: React.FC<TranslatedViewProps> = ({ docId }) => {
   const [showPageJumper, setShowPageJumper] = useState(false);
   const languageSelectorRef = useRef<HTMLDivElement>(null);
   const pageJumperRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Language selection hook
   const {
@@ -500,14 +501,12 @@ const TranslatedView: React.FC<TranslatedViewProps> = ({ docId }) => {
               </span>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-6`}>
+        </div>      </div>      
+        {/* Main Content */}
+      <div className={`flex-1 min-h-0 ${isMobile ? 'flex flex-col' : 'grid grid-cols-2'} gap-4 overflow-auto`}>
         {/* PDF Viewer */}
         {(!isMobile || activeTab === 'original') && (
-          <div className="bg-white dark:bg-neutral-800 p-6 rounded-xl shadow-md border border-neutral-200 dark:border-neutral-700 transition-all duration-300">
+          <div className="bg-white dark:bg-neutral-800 p-3 rounded-xl shadow-md border border-neutral-200 dark:border-neutral-700 transition-all duration-300 flex flex-col h-full min-h-0 overflow-auto">
             <PdfViewer 
               pageImage={pageData?.page_image || ''} 
               isLoading={isLoading}
@@ -519,7 +518,7 @@ const TranslatedView: React.FC<TranslatedViewProps> = ({ docId }) => {
 
         {/* Translation Panel */}
         {(!isMobile || activeTab === 'translated') && (
-          <div className="bg-white dark:bg-neutral-800 p-6 rounded-xl shadow-md border border-neutral-200 dark:border-neutral-700 transition-all duration-300">          
+          <div className="bg-white dark:bg-neutral-800 p-3 rounded-xl shadow-md border border-neutral-200 dark:border-neutral-700 transition-all duration-300 flex flex-col h-full min-h-0 overflow-auto">          
             <TranslationPanel
               originalText={pageData?.original_text || ''}
               translatedText={pageData?.translated_text || ''}
