@@ -14,9 +14,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
   const [progress, setProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [dragCounter, setDragCounter] = useState(0); // Track multiple drag events
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   // Reset progress when a new file is selected
   useEffect(() => {
@@ -38,64 +40,95 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
     const files = event.target.files;
     if (files && files.length > 0) {
       const selectedFile = files[0];
-      if (selectedFile.type === 'application/pdf') {
-        setFile(selectedFile);
-        setError(null);
-      } else {
-        setFile(null);
-        setError('Por favor, selecione um arquivo PDF válido');
-      }
+      validateAndSetFile(selectedFile);
     }
   };
 
-  const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(true);
+  const validateAndSetFile = (selectedFile: File) => {
+    if (selectedFile.type === 'application/pdf') {
+      setFile(selectedFile);
+      setError(null);
+      
+      // Add a small animation effect when file is selected
+      if (dropZoneRef.current) {
+        dropZoneRef.current.classList.add('scale-105');
+        setTimeout(() => {
+          if (dropZoneRef.current) {
+            dropZoneRef.current.classList.remove('scale-105');
+          }
+        }, 200);
+      }
+    } else {
+      setFile(null);
+      setError('Por favor, selecione um arquivo PDF válido');
+      
+      // Add error shake animation
+      if (dropZoneRef.current) {
+        dropZoneRef.current.classList.add('shake-animation');
+        setTimeout(() => {
+          if (dropZoneRef.current) {
+            dropZoneRef.current.classList.remove('shake-animation');
+          }
+        }, 500);
+      }
+    }
   };
   
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+  // Improved drag and drop handlers to handle nested elements better
+  const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    if (!isDragging) {
-      setIsDragging(true);
-    }
+    event.stopPropagation();
+    setDragCounter(prev => prev + 1);
+    setIsDragging(true);
   };
   
   const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    setIsDragging(false);
+    event.stopPropagation();
+    setDragCounter(prev => prev - 1);
+    if (dragCounter <= 1) {
+      setIsDragging(false);
+      setDragCounter(0);
+    }
+  };
+  
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy'; // Show the copy icon
+    }
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    event.stopPropagation();
     setIsDragging(false);
+    setDragCounter(0);
     
     const files = event.dataTransfer.files;
     if (files && files.length > 0) {
-      const droppedFile = files[0];
-      if (droppedFile.type === 'application/pdf') {
-        setFile(droppedFile);
-        setError(null);
-      } else {
-        setError('Por favor, arraste apenas arquivos PDF');
-      }
+      validateAndSetFile(files[0]);
     }
   };
 
   const simulateProgress = () => {
     setProgress(0);
     
-    // Create a realistic upload simulation
+    // Create a realistic upload simulation with dynamic speed simulation
     progressTimerRef.current = setInterval(() => {
       setProgress(prev => {
-        // Slowly accelerate then decelerate as it gets closer to 90%
-        const newProgress = prev < 30 
+        // Initial fast progress that slows down towards 90%
+        const newProgress = prev < 20 
           ? prev + 3 
-          : prev < 60 
-            ? prev + 2 
-            : prev < 85 
-              ? prev + 0.5
-              : prev;
-              
+          : prev < 50 
+            ? prev + (2 + Math.random()) 
+            : prev < 75 
+              ? prev + (0.7 + Math.random() * 0.8)
+              : prev < 85
+                ? prev + (0.2 + Math.random() * 0.4)
+                : prev;
+                
         if (newProgress >= 90) {
           if (progressTimerRef.current) {
             clearInterval(progressTimerRef.current);
@@ -135,7 +168,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
         // Small delay to show the full progress bar and success state before transitioning
         setTimeout(() => {
           onFileUploaded(response.data.doc_id);
-        }, 500);
+        }, 800);
       } else {
         throw new Error('Resposta inválida do servidor');
       }
@@ -163,39 +196,44 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
   
   return (
     <div className="w-full">
-      <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg">
+      <div className="bg-white dark:bg-neutral-800 rounded-3xl shadow-xl overflow-hidden border border-neutral-100 dark:border-neutral-700 transition-all duration-300">
         <div className="p-8">
-          <div className="flex flex-col items-center justify-center mb-6">
-            <div className="mb-4">
-              <svg className="w-16 h-16 text-primary-500 dark:text-primary-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <div className="flex flex-col items-center justify-center mb-8">
+            <div className="mb-5 relative">
+              <div className="absolute inset-0 bg-primary-200 dark:bg-primary-900/30 rounded-full blur-lg opacity-30 animate-pulse"></div>
+              <svg className="w-20 h-20 text-primary-500 dark:text-primary-400 relative z-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path fillRule="evenodd" clipRule="evenodd" d="M6 2C4.34315 2 3 3.34315 3 5V19C3 20.6569 4.34315 22 6 22H18C19.6569 22 21 20.6569 21 19V9C21 5.13401 17.866 2 14 2H6ZM6 4H13V9H19V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V5C5 4.44772 5.44772 4 6 4Z" fill="currentColor" />
                 <path d="M7 18H17V16H7V18Z" fill="currentColor" />
                 <path d="M17 14H7V12H17V14Z" fill="currentColor" />
                 <path d="M7 10H11V8H7V10Z" fill="currentColor" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-neutral-800 dark:text-neutral-200 text-center">
-              Traduza seu documento PDF
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-neutral-800 dark:text-neutral-100 text-center bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600 text-transparent">
+              MoziTranslate
             </h2>
-            <p className="text-neutral-500 dark:text-neutral-400 mt-1 text-center max-w-md">
-              Selecione um arquivo PDF para traduzir para vários idiomas enquanto preserva o layout original
+            <p className="text-neutral-500 dark:text-neutral-400 mt-2 text-center max-w-md">
+              Selecione um arquivo PDF para traduzi-lo enquanto preserva o layout original
             </p>
           </div>
 
           {/* Upload Area */}
           <div
-            className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+            ref={dropZoneRef}
+            className={`relative border-3 border-dashed rounded-2xl p-10 text-center transition-all duration-300 ${
               isDragging
-                ? 'border-primary-400 dark:border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                ? 'border-primary-400 dark:border-primary-500 bg-primary-50/80 dark:bg-primary-900/30 shadow-inner scale-[1.02]'
                 : file 
-                  ? 'border-secondary-400 dark:border-secondary-700 bg-secondary-50 dark:bg-secondary-900/10' 
-                  : 'border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-neutral-400'
+                  ? 'border-secondary-300 dark:border-secondary-700 bg-secondary-50/80 dark:bg-secondary-900/20 shadow-md' 
+                  : 'border-neutral-300 dark:border-neutral-700 bg-neutral-100/70 dark:bg-neutral-900/50 hover:bg-neutral-50 dark:hover:bg-neutral-800/70 hover:border-neutral-400 hover:shadow-md'
             }`}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
+            style={{ 
+              transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)' // Custom bounce effect
+            }}
           >
             <input
               ref={fileInputRef}
@@ -207,13 +245,13 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
               disabled={uploading}
             />
             
-            <div className="flex flex-col items-center justify-center py-6">
+            <div className="flex flex-col items-center justify-center py-8">
               {file ? (
                 // File selected state
                 <div className="flex flex-col items-center">
-                  <div className="p-3 mb-3 rounded-full bg-secondary-100 dark:bg-secondary-900/30">
+                  <div className="p-4 mb-4 rounded-full bg-secondary-100 dark:bg-secondary-900/30 shadow-md">
                     <svg 
-                      className="w-8 h-8 text-secondary-600 dark:text-secondary-400" 
+                      className="w-10 h-10 text-secondary-600 dark:text-secondary-400" 
                       viewBox="0 0 24 24" 
                       fill="none" 
                       xmlns="http://www.w3.org/2000/svg"
@@ -221,7 +259,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
                       <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <p className="font-medium text-secondary-700 dark:text-secondary-300 mb-1 break-all max-w-full">
+                  <p className="font-medium text-lg text-secondary-600 dark:text-secondary-300 mb-2 break-all max-w-full">
                     {file.name}
                   </p>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
@@ -231,9 +269,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
               ) : (
                 // No file selected state
                 <div className="flex flex-col items-center">
-                  <div className="p-3 mb-3 rounded-full bg-neutral-200 dark:bg-neutral-800">
+                  <div className="p-5 mb-4 rounded-full bg-neutral-200 dark:bg-neutral-800 shadow-inner group-hover:shadow-md transition-all">
                     <svg
-                      className="w-8 h-8 text-neutral-600 dark:text-neutral-400"
+                      className="w-10 h-10 text-neutral-600 dark:text-neutral-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -247,10 +285,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
                       ></path>
                     </svg>
                   </div>
-                  <p className="font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                    Clique ou arraste um PDF
+                  <p className="font-medium text-lg text-neutral-700 dark:text-neutral-200 mb-2">
+                    {isDragging ? 'Solte o arquivo aqui' : 'Clique ou arraste um PDF'}
                   </p>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-500">
+                  <p className="text-sm text-neutral-500 dark:text-neutral-500 max-w-xs text-center">
                     Suporta arquivos PDF até 20MB
                   </p>
                 </div>
@@ -259,31 +297,26 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
             
             {/* Uploading overlay */}
             {uploading && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 dark:bg-neutral-900/90 backdrop-blur-sm rounded-xl">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm rounded-2xl">
                 <div className="flex flex-col items-center max-w-xs">
-                  <div className="relative w-16 h-16 mb-4">
-                    <svg className="absolute inset-0 w-16 h-16 text-primary-200 dark:text-primary-900 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                    </svg>
-                    <svg className="absolute inset-0 w-16 h-16 text-primary-600 dark:text-primary-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle 
-                        cx="12" 
-                        cy="12" 
-                        r="10" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeDasharray={`${progress * 0.6} 100`} 
-                        transform="rotate(-90 12 12)" 
-                      />
-                    </svg>
+                  <div className="relative w-20 h-20 mb-4">
+                    <div className="absolute inset-0 rounded-full border-8 border-primary-200/50 dark:border-primary-900/50"></div>
+                    <div className="absolute inset-0 rounded-full border-8 border-transparent border-t-primary-600 dark:border-t-primary-400 animate-spin"></div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+                      <span className="text-lg font-bold text-primary-700 dark:text-primary-300">
                         {Math.round(progress)}%
                       </span>
                     </div>
                   </div>
                   
-                  <p className="text-center font-medium text-primary-700 dark:text-primary-300 mb-1">
+                  <div className="w-full h-1.5 bg-primary-100 dark:bg-primary-900/50 rounded-full overflow-hidden mb-3">
+                    <div 
+                      className="h-full bg-primary-500 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                  
+                  <p className="text-center font-semibold text-primary-700 dark:text-primary-300 text-lg mb-1">
                     {uploadSuccess ? 'Upload concluído!' : 'Enviando arquivo...'}
                   </p>
                   <p className="text-sm text-center text-neutral-500 dark:text-neutral-400">
@@ -299,9 +332,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
 
           {/* Error message */}
           {error && (
-            <div className="mt-4 p-4 bg-state-errorLight dark:bg-neutral-900 rounded-lg border border-state-error/20 dark:border-state-error/30">
+            <div className="mt-5 p-4 bg-state-errorLight dark:bg-neutral-900 rounded-xl border-l-4 border-state-error dark:border-state-error/70 shadow-lg animate-slideInUp">
               <div className="flex items-center">
-                <svg className="w-5 h-5 text-state-error mr-2 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-6 h-6 text-state-error mr-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path fillRule="evenodd" clipRule="evenodd" d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 8C12.5523 8 13 8.44772 13 9V13C13 13.5523 12.5523 14 12 14C11.4477 14 11 13.5523 11 13V9C11 8.44772 11.4477 8 12 8ZM12 15C11.4477 15 11 15.4477 11 16C11 16.5523 11.4477 17 12 17C12.5523 17 13 16.5523 13 16C13 15.4477 12.5523 15 12 15Z" fill="currentColor" />
                 </svg>
                 <p className="text-state-error font-medium">
@@ -316,42 +349,74 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
             <button
               onClick={handleUpload}
               disabled={!file || uploading}
-              className={`w-full py-3.5 px-4 rounded-lg text-white font-semibold shadow-md transition-all duration-300 ${
+              className={`w-full py-4 px-6 rounded-xl text-white font-bold shadow-lg transition-all duration-500 ${
                 !file || uploading
                   ? 'bg-neutral-300 dark:bg-neutral-700 cursor-not-allowed'
-                  : 'bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transform hover:translate-y-[-1px] hover:shadow-lg'
+                  : 'bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 transform hover:translate-y-[-2px] hover:shadow-xl'
               }`}
+              style={{
+                animation: file && !uploading ? 'pulse 2s infinite' : 'none',
+              }}
             >
               {file ? 'Traduzir PDF' : 'Selecione um arquivo para começar'}
             </button>
           </div>
           
           {/* Additional information */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-6 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-6 pt-4 border-t border-neutral-200 dark:border-neutral-700">
             <div className="flex items-center text-sm text-neutral-600 dark:text-neutral-400">
-              <svg className="w-5 h-5 mr-2 text-primary-500 dark:text-primary-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 12L11 14L15 10M12 3L13.9101 4.87147L16.5 4.20577L17.2184 6.78155L19.7942 7.5L19.1285 10.0899L21 12L19.1285 13.9101L19.7942 16.5L17.2184 17.2184L16.5 19.7942L13.9101 19.1285L12 21L10.0899 19.1285L7.5 19.7942L6.78155 17.2184L4.20577 16.5L4.87147 13.9101L3 12L4.87147 10.0899L4.20577 7.5L6.78155 6.78155L7.5 4.20577L10.0899 4.87147L12 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <div className="p-2 rounded-full bg-primary-100 dark:bg-primary-900/30 mr-3">
+                <svg className="w-5 h-5 text-primary-500 dark:text-primary-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 12L11 14L15 10M12 3L13.9101 4.87147L16.5 4.20577L17.2184 6.78155L19.7942 7.5L19.1285 10.0899L21 12L19.1285 13.9101L19.7942 16.5L17.2184 17.2184L16.5 19.7942L13.9101 19.1285L12 21L10.0899 19.1285L7.5 19.7942L6.78155 17.2184L4.20577 16.5L4.87147 13.9101L3 12L4.87147 10.0899L4.20577 7.5L6.78155 6.78155L7.5 4.20577L10.0899 4.87147L12 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
               <span>50+ idiomas suportados</span>
             </div>
             
             <div className="flex items-center text-sm text-neutral-600 dark:text-neutral-400">
-              <svg className="w-5 h-5 mr-2 text-primary-500 dark:text-primary-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M18.2218 11.2218C18.4027 11.636 18.5 12.0981 18.5 12.5833C18.5 13.0685 18.4027 13.5306 18.2218 13.9448M5.77823 13.9448C5.59733 13.5306 5.5 13.0685 5.5 12.5833C5.5 12.0981 5.59733 11.636 5.77823 11.2218M15.7218 8.7782C16.6926 9.75223 17.25 11.0818 17.25 12.5C17.25 13.9182 16.6926 15.2478 15.7218 16.2218M8.27823 16.2218C7.30737 15.2478 6.75 13.9182 6.75 12.5C6.75 11.0818 7.30737 9.75223 8.27823 8.7782M3 12.5C3 7.25 7.25 3 12.5 3C17.75 3 22 7.25 22 12.5C22 17.75 17.75 22 12.5 22C7.25 22 3 17.75 3 12.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              <span>Rápido e seguro</span>
+              <div className="p-2 rounded-full bg-primary-100 dark:bg-primary-900/30 mr-3">
+                <svg className="w-5 h-5 text-primary-500 dark:text-primary-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 12.5C3 7.25 7.25 3 12.5 3C17.75 3 22 7.25 22 12.5C22 17.75 17.75 22 12.5 22C7.25 22 3 17.75 3 12.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span>Tradução rápida</span>
             </div>
             
             <div className="flex items-center text-sm text-neutral-600 dark:text-neutral-400">
-              <svg className="w-5 h-5 mr-2 text-primary-500 dark:text-primary-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 12H15M9 16H15M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <div className="p-2 rounded-full bg-primary-100 dark:bg-primary-900/30 mr-3">
+                <svg className="w-5 h-5 text-primary-500 dark:text-primary-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 12H15M9 16H15M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
               <span>Preserva o layout do documento</span>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Custom animations */}
+      <style jsx>{`
+        @keyframes shake-animation {
+          0% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          50% { transform: translateX(5px); }
+          75% { transform: translateX(-5px); }
+          100% { transform: translateX(0); }
+        }
+        .shake-animation {
+          animation: shake-animation 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 0 10px rgba(6, 182, 212, 0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
