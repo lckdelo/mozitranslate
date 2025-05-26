@@ -21,6 +21,7 @@ from pdf_processor import (
     close_document,
     PDFProcessingError
 )
+from pdf_history_db import pdf_history_db
 
 app = FastAPI(
     title="MoziTranslate API",
@@ -48,6 +49,36 @@ class PageResponse(BaseModel):
     original_text: str
     translated_text: str
     page_number: int
+    total_pages: int
+
+class PdfHistoryItem(BaseModel):
+    pdf_id: str
+    filename: str
+    file_path: Optional[str] = None
+    last_page: int = 1
+    total_pages: int = 0
+    progress: float = 0.0
+    language: str = "Português"
+    language_flag: str = "🇧🇷"
+    upload_date: str
+    last_read_date: str
+    thumbnail_path: Optional[str] = None
+
+class ProgressUpdateRequest(BaseModel):
+    pdf_id: str
+    current_page: int
+    total_pages: int
+
+class AddPdfHistoryRequest(BaseModel):
+    pdf_id: str
+    filename: str
+    file_path: Optional[str] = None
+    last_page: int = 1
+    total_pages: int = 0
+    progress: float = 0.0
+    language: str = "Português"
+    language_flag: str = "🇧🇷"
+    upload_date: Optional[str] = None
     total_pages: int
 
 # Cache for page translations
@@ -165,8 +196,7 @@ async def close_pdf(doc_id: str):
     """
     try:
         close_document(doc_id)
-        
-        # Also remove from translation cache
+          # Also remove from translation cache
         if doc_id in translation_cache:
             del translation_cache[doc_id]
             
@@ -175,6 +205,110 @@ async def close_pdf(doc_id: str):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to close document: {str(e)}")
+
+# PDF History Endpoints
+
+@app.get("/pdf/history")
+async def get_pdf_history(limit: int = 10):
+    """
+    Get PDF history ordered by last read date
+    """
+    try:
+        history = pdf_history_db.get_history(limit=limit)
+        return {"status": "success", "data": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get history: {str(e)}")
+
+@app.post("/pdf/history")
+async def add_pdf_to_history(request: AddPdfHistoryRequest):
+    """
+    Add or update a PDF in history
+    """
+    try:
+        pdf_data = request.dict()
+        success = pdf_history_db.add_or_update_pdf(pdf_data)
+        
+        if success:
+            return {"status": "success", "message": "PDF added to history"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to add PDF to history")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to add PDF to history: {str(e)}")
+
+@app.put("/pdf/history/progress")
+async def update_reading_progress(request: ProgressUpdateRequest):
+    """
+    Update reading progress for a specific PDF
+    """
+    try:
+        success = pdf_history_db.update_progress(
+            pdf_id=request.pdf_id,
+            current_page=request.current_page,
+            total_pages=request.total_pages
+        )
+        
+        if success:
+            return {"status": "success", "message": "Progress updated"}
+        else:
+            raise HTTPException(status_code=404, detail="PDF not found in history")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update progress: {str(e)}")
+
+@app.get("/pdf/history/{pdf_id}")
+async def get_pdf_from_history(pdf_id: str):
+    """
+    Get specific PDF from history by ID
+    """
+    try:
+        pdf_data = pdf_history_db.get_pdf_by_id(pdf_id)
+        
+        if pdf_data:
+            return {"status": "success", "data": pdf_data}
+        else:
+            raise HTTPException(status_code=404, detail="PDF not found in history")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get PDF from history: {str(e)}")
+
+@app.delete("/pdf/history/{pdf_id}")
+async def remove_pdf_from_history(pdf_id: str):
+    """
+    Remove PDF from history
+    """
+    try:
+        success = pdf_history_db.remove_pdf(pdf_id)
+        
+        if success:
+            return {"status": "success", "message": "PDF removed from history"}
+        else:
+            raise HTTPException(status_code=404, detail="PDF not found in history")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to remove PDF from history: {str(e)}")
+
+@app.delete("/pdf/history")
+async def clear_pdf_history():
+    """
+    Clear all PDF history
+    """
+    try:
+        success = pdf_history_db.clear_history()
+        
+        if success:
+            return {"status": "success", "message": "History cleared"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to clear history")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to clear history: {str(e)}")
+
+@app.get("/pdf/history/stats")
+async def get_history_statistics():
+    """
+    Get history statistics
+    """
+    try:
+        stats = pdf_history_db.get_statistics()
+        return {"status": "success", "data": stats}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get statistics: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

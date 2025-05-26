@@ -4,36 +4,36 @@ import { useState, useEffect } from 'react';
 import FileUploader from '@/components/FileUploader';
 import TranslatedView from '@/components/TranslatedView';
 import PdfHistory from '@/components/PdfHistory';
-import usePdfHistory from '@/hooks/usePdfHistory';
+import usePdfHistoryDB from '@/hooks/usePdfHistoryDB';
 
 export default function Home() {
   const [docId, setDocId] = useState<string | null>(null);
   const [startingPage, setStartingPage] = useState<number>(1);
-    // PDF History management
+  
+  // PDF History management with SQLite
   const {
     history,
+    isLoading,
+    error,
     addToHistory,
     updateProgress,
     removeFromHistory,
     clearHistory,
-  } = usePdfHistory();
+  } = usePdfHistoryDB();
 
   // Handle file upload with history tracking
   const handleFileUploaded = (newDocId: string, fileName?: string) => {
     setDocId(newDocId);
     setStartingPage(1);
-    
-    // Add to history when a new PDF is uploaded
+      // Add to history when a new PDF is uploaded
     if (fileName) {
       addToHistory({
-        id: newDocId,
-        name: fileName,
-        lastPage: 1,
-        totalPages: 0, // Will be updated when first page loads
-        progress: 0,
+        pdf_id: newDocId,
+        filename: fileName,
+        total_pages: 0, // Will be updated when first page loads
         language: 'Português',
-        languageFlag: '🇧🇷',
-      });
+        language_flag: '🇧🇷',
+      }).catch(console.error);
     }
   };
 
@@ -42,13 +42,17 @@ export default function Home() {
     setDocId(pdfId);
     setStartingPage(lastPage || 1);
   };
-
   // Handle removing PDF from history
-  const handleRemoveFromHistory = (pdfId: string) => {
-    removeFromHistory(pdfId);
-    // If the currently opened PDF is removed, close it
-    if (docId === pdfId) {
-      setDocId(null);      setStartingPage(1);
+  const handleRemoveFromHistory = async (pdfId: string) => {
+    try {
+      await removeFromHistory(pdfId);
+      // If the currently opened PDF is removed, close it
+      if (docId === pdfId) {
+        setDocId(null);
+        setStartingPage(1);
+      }
+    } catch (error) {
+      console.error('Failed to remove PDF from history:', error);
     }
   };
 
@@ -81,9 +85,10 @@ export default function Home() {
           
           {/* PDF History Section */}
           <div className="flex-1 min-h-0 overflow-auto">
-            <div className="max-w-6xl mx-auto px-4">
-              <PdfHistory
+            <div className="max-w-6xl mx-auto px-4">              <PdfHistory
                 history={history}
+                isLoading={isLoading}
+                error={error}
                 onSelectPdf={handleSelectFromHistory}
                 onRemovePdf={handleRemoveFromHistory}
                 onClearHistory={clearHistory}

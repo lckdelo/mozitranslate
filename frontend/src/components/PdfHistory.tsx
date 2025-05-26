@@ -1,11 +1,13 @@
 "use client";
 
 import React from 'react';
-import { PdfHistoryItem } from '@/hooks/usePdfHistory';
+import { PdfHistoryItem } from '@/utils/api';
 import PdfHistoryCard from './PdfHistoryCard';
 
 interface PdfHistoryProps {
   history: PdfHistoryItem[];
+  isLoading?: boolean;
+  error?: string | null;
   onSelectPdf: (pdfId: string, lastPage?: number) => void;
   onRemovePdf: (pdfId: string) => void;
   onClearHistory: () => void;
@@ -13,10 +15,39 @@ interface PdfHistoryProps {
 
 const PdfHistory: React.FC<PdfHistoryProps> = ({ 
   history, 
+  isLoading = false,
+  error = null,
   onSelectPdf, 
   onRemovePdf, 
   onClearHistory 
 }) => {
+  if (isLoading) {
+    return (
+      <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-8 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-4"></div>
+        <p className="text-neutral-600 dark:text-neutral-400">Carregando histórico...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-xl p-8 text-center border border-red-200 dark:border-red-800">
+        <div className="w-16 h-16 mx-auto mb-4 bg-red-200 dark:bg-red-800 rounded-full flex items-center justify-center">
+          <svg className="w-8 h-8 text-red-500 dark:text-red-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9V13M12 17H12.01M21 12C21 16.97 16.97 21 12 21C7.03 21 3 16.97 3 12C3 7.03 7.03 3 12 3C16.97 3 21 7.03 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">
+          Erro ao carregar histórico
+        </h3>
+        <p className="text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      </div>
+    );
+  }
+
   if (history.length === 0) {
     return (
       <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-8 text-center border-2 border-dashed border-neutral-300 dark:border-neutral-600">
@@ -63,11 +94,10 @@ const PdfHistory: React.FC<PdfHistoryProps> = ({
             <span>Limpar</span>
           </button>
         )}
-      </div>      {/* Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      </div>      {/* Cards Grid */}      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {history.map((item) => (
           <PdfHistoryCard
-            key={item.id}
+            key={item.pdf_id}
             item={item}
             onSelect={onSelectPdf}
             onRemove={onRemovePdf}

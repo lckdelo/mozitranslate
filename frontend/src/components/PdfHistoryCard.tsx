@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { PdfHistoryItem } from '@/hooks/usePdfHistory';
+import { PdfHistoryItem } from '@/utils/api';
 import { 
   formatDateRelative, 
   getProgressColor, 
@@ -42,11 +42,10 @@ const PdfHistoryCard: React.FC<PdfHistoryCardProps> = ({ item, onSelect, onRemov
   };
   return (
     <div className="group relative bg-white dark:bg-neutral-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-600 transform hover:-translate-y-1 hover:scale-[1.02]">
-      {/* Remove Button */}
-      <button
+      {/* Remove Button */}      <button
         onClick={(e) => {
           e.stopPropagation();
-          onRemove(item.id);
+          onRemove(item.pdf_id);
         }}
         className="absolute top-3 right-3 z-10 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center text-xs shadow-lg hover:scale-110"
         title="Remover do histórico"
@@ -56,10 +55,9 @@ const PdfHistoryCard: React.FC<PdfHistoryCardProps> = ({ item, onSelect, onRemov
         </svg>
       </button>
 
-      {/* Card Content */}
-      <div 
+      {/* Card Content */}      <div 
         className="p-5 cursor-pointer h-full flex flex-col relative overflow-hidden"
-        onClick={() => onSelect(item.id, item.lastPage)}
+        onClick={() => onSelect(item.pdf_id, item.last_page)}
       >
         {/* Animated Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-50/0 via-primary-50/0 to-secondary-50/0 dark:from-primary-900/0 dark:via-primary-900/0 dark:to-secondary-900/0 group-hover:from-primary-50/30 group-hover:via-primary-50/20 group-hover:to-secondary-50/30 dark:group-hover:from-primary-900/20 dark:group-hover:via-primary-900/10 dark:group-hover:to-secondary-900/20 transition-all duration-500"></div>
@@ -68,12 +66,11 @@ const PdfHistoryCard: React.FC<PdfHistoryCardProps> = ({ item, onSelect, onRemov
         <div className="relative z-10">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm truncate pr-8 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors" title={item.name}>
-                {item.name}
+            <div className="flex-1 min-w-0">              <h3 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm truncate pr-8 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors" title={item.filename}>
+                {item.filename}
               </h3>
               <div className="flex items-center mt-2 space-x-2">
-                <span className="text-xl transform group-hover:scale-110 transition-transform duration-200">{item.languageFlag}</span>
+                <span className="text-xl transform group-hover:scale-110 transition-transform duration-200">{item.language_flag}</span>
                 <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium bg-neutral-100 dark:bg-neutral-700 px-2 py-1 rounded-full">
                   {item.language}
                 </span>
@@ -112,9 +109,8 @@ const PdfHistoryCard: React.FC<PdfHistoryCardProps> = ({ item, onSelect, onRemov
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse"></div>
                 </div>
               </div>
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-xs text-neutral-600 dark:text-neutral-400 font-medium">
-                  Página {item.lastPage} de {item.totalPages}
+              <div className="flex justify-between items-center mt-2">                <span className="text-xs text-neutral-600 dark:text-neutral-400 font-medium">
+                  Página {item.last_page} de {item.total_pages}
                 </span>
                 <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 px-2 py-0.5 rounded-full">
                   {item.progress}%
@@ -123,9 +119,8 @@ const PdfHistoryCard: React.FC<PdfHistoryCardProps> = ({ item, onSelect, onRemov
             </div>
 
             {/* Date and Resume Button */}
-            <div className="flex items-center justify-between pt-1 border-t border-neutral-100 dark:border-neutral-700 group-hover:border-primary-200 dark:group-hover:border-primary-700 transition-colors">
-              <span className="text-xs text-neutral-500 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-800 px-2 py-1 rounded-md">
-                {formatDate(item.lastReadDate)}
+            <div className="flex items-center justify-between pt-1 border-t border-neutral-100 dark:border-neutral-700 group-hover:border-primary-200 dark:group-hover:border-primary-700 transition-colors">              <span className="text-xs text-neutral-500 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-800 px-2 py-1 rounded-md">
+                {formatDate(item.last_read_date)}
               </span>
               <div className="flex items-center space-x-1.5 text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
                 <svg className="w-3.5 h-3.5 group-hover:animate-pulse" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
