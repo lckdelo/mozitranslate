@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 
 interface FileUploaderProps {
-  onFileUploaded: (docId: string) => void;
+  onFileUploaded: (docId: string, fileName?: string) => void;
 }
 
 const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
@@ -164,10 +164,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileUploaded }) => {
         // Set progress to 100% when upload completes
         setProgress(100);
         setUploadSuccess(true);
-        
-        // Small delay to show the full progress bar and success state before transitioning
+          // Small delay to show the full progress bar and success state before transitioning
         setTimeout(() => {
-          onFileUploaded(response.data.doc_id);
+          onFileUploaded(response.data.doc_id, file.name);
         }, 800);
       } else {
         throw new Error('Resposta inválida do servidor');

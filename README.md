@@ -4,8 +4,11 @@ MoziTranslate é uma aplicação que traduz páginas de PDF em tempo real enquan
 
 ## 🌟 Funcionalidades Principais
 
-- Tradução em tempo real de conteúdo PDF usando a API não oficial do Google Translate
-- Interface dividida: visualização do PDF original e texto traduzido
+- **Tradução em tempo real** de conteúdo PDF usando a API não oficial do Google Translate
+- **Interface dividida**: visualização do PDF original e texto traduzido
+- **Sistema de Histórico PDF**: Rastreamento automático de progresso de leitura com cartões visuais
+- **Retomada de Leitura**: Continue de onde parou automaticamente
+- **Tipografia Avançada**: Sistema de formatação inteligente com detecção de cabeçalhos e conteúdo especial
 - Tradução sob demanda apenas da página atual
 - Suporte a múltiplos idiomas com mais de 10 idiomas disponíveis
 - Navegação por páginas com atalhos de teclado (setas, Home/End)

@@ -9,9 +9,15 @@ import useLanguageSelection from '@/hooks/useLanguageSelection';
 
 interface TranslatedViewProps {
   docId: string;
+  startingPage?: number;
+  onProgressUpdate?: (pdfId: string, currentPage: number, totalPages: number) => void;
 }
 
-const TranslatedView: React.FC<TranslatedViewProps> = ({ docId }) => {
+const TranslatedView: React.FC<TranslatedViewProps> = ({ 
+  docId, 
+  startingPage = 1,
+  onProgressUpdate 
+}) => {
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<'original' | 'translated'>('original');
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
@@ -41,8 +47,7 @@ const TranslatedView: React.FC<TranslatedViewProps> = ({ docId }) => {
       setTimeout(() => setIsChangingLanguage(false), 500); // Reset after a delay
     }
   });
-  
-  // PDF translation hook with language options
+    // PDF translation hook with language options
   const {
     pageData,
     isLoading,
@@ -51,7 +56,7 @@ const TranslatedView: React.FC<TranslatedViewProps> = ({ docId }) => {
     navigateToPage,
     isPageCached,
     resetCache
-  } = usePdfTranslation(docId, 1, { sourceLang, targetLang });
+  } = usePdfTranslation(docId, startingPage, { sourceLang, targetLang });
   
   // Handle errors in PDF processing
   useEffect(() => {
@@ -62,8 +67,7 @@ const TranslatedView: React.FC<TranslatedViewProps> = ({ docId }) => {
       setPageLoadError(null);
     }
   }, [error]);
-  
-  // Use our custom navigation hook
+    // Use our custom navigation hook
   const {
     currentPage,
     setCurrentPage,
@@ -75,11 +79,16 @@ const TranslatedView: React.FC<TranslatedViewProps> = ({ docId }) => {
     isLastPage,
   } = usePageNavigation({
     totalPages,
-    initialPage: 1,
+    initialPage: startingPage,
     onPageChange: (page) => {
       // This will be called whenever the page changes
       setLastAttemptedPage(page);
       navigateToPage(page);
+      
+      // Update progress in history
+      if (onProgressUpdate && totalPages > 0) {
+        onProgressUpdate(docId, page, totalPages);
+      }
     }
   });
 
