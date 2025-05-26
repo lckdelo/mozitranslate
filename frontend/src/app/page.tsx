@@ -8,6 +8,7 @@ import usePdfHistoryDB from '@/hooks/usePdfHistoryDB';
 
 export default function Home() {
   const [docId, setDocId] = useState<string | null>(null);
+  const [pdfId, setPdfId] = useState<string | null>(null); // Original PDF ID for history tracking
   const [startingPage, setStartingPage] = useState<number>(1);
   
   // PDF History management with SQLite
@@ -20,10 +21,10 @@ export default function Home() {
     removeFromHistory,
     clearHistory,
   } = usePdfHistoryDB();
-
   // Handle file upload with history tracking
   const handleFileUploaded = (newDocId: string, fileName?: string) => {
     setDocId(newDocId);
+    setPdfId(newDocId); // For new uploads, doc_id and pdf_id are the same
     setStartingPage(1);
       // Add to history when a new PDF is uploaded
     if (fileName) {
@@ -35,22 +36,44 @@ export default function Home() {
         language_flag: '🇧🇷',
       }).catch(console.error);
     }
+  };  // Handle selecting PDF from history
+  const handleSelectFromHistory = async (pdfId: string, lastPage?: number) => {
+    try {
+      // Try to reopen the PDF from the stored file path
+      const { reopenPdfFromHistory } = await import('@/utils/api');
+      const response = await reopenPdfFromHistory(pdfId);
+      
+      // Set the new document ID returned from reopening
+      setDocId(response.doc_id);
+      setPdfId(pdfId); // Keep the original PDF ID for history tracking
+      setStartingPage(lastPage || 1);
+    } catch (error) {
+      console.error('Failed to reopen PDF from history:', error);
+      
+      // If reopening fails, treat it as document not found
+      handleDocumentNotFound(pdfId);
+    }
   };
-
-  // Handle selecting PDF from history
-  const handleSelectFromHistory = (pdfId: string, lastPage?: number) => {
-    setDocId(pdfId);
-    setStartingPage(lastPage || 1);
-  };
-  // Handle removing PDF from history
+  // Handle document not found error
+  const handleDocumentNotFound = (pdfId: string) => {
+    // Remove the invalid PDF from history
+    handleRemoveFromHistory(pdfId);
+    // Reset the view to show upload interface
+    setDocId(null);
+    setPdfId(null);
+    setStartingPage(1);
+  };  // Handle removing PDF from history
   const handleRemoveFromHistory = async (pdfId: string) => {
     try {
-      await removeFromHistory(pdfId);
-      // If the currently opened PDF is removed, close it
+      // If the currently opened PDF is being removed, close it immediately
+      // This prevents the component from trying to load a document that's being deleted
       if (docId === pdfId) {
         setDocId(null);
+        setPdfId(null);
         setStartingPage(1);
       }
+      
+      await removeFromHistory(pdfId);
     } catch (error) {
       console.error('Failed to remove PDF from history:', error);
     }
@@ -106,11 +129,12 @@ export default function Home() {
               >
                 Escolher outro PDF
               </button>
-            </div>            <div className="flex-1 min-h-0 overflow-auto">
-              <TranslatedView 
+            </div>            <div className="flex-1 min-h-0 overflow-auto">              <TranslatedView 
                 docId={docId} 
+                pdfId={pdfId}
                 startingPage={startingPage}
                 onProgressUpdate={updateProgress}
+                onDocumentNotFound={handleDocumentNotFound}
               />
             </div>
           </div>

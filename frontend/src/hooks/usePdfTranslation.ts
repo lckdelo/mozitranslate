@@ -34,17 +34,28 @@ const usePdfTranslation = (
   
   // Cache translated pages to avoid re-fetching
   // Use a key that combines page number, source language and target language
-  const [cache, setCache] = useState<Record<string, PageData>>({});
-
-  // Initialize document and load first page
+  const [cache, setCache] = useState<Record<string, PageData>>({});  // Initialize document and load first page
   useEffect(() => {
     if (docId) {
-      navigateToPage(initialPage);
-      
-      // Optional: Preload the next page in background
-      if (initialPage < totalPages) {
-        prefetchPage(initialPage + 1);
-      }
+      // Add a small delay to prevent race conditions when components are mounting/unmounting
+      const timeoutId = setTimeout(() => {
+        navigateToPage(initialPage);
+        
+        // Optional: Preload the next page in background
+        if (initialPage < totalPages) {
+          prefetchPage(initialPage + 1);
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      // Reset state when docId becomes null
+      setPageData(null);
+      setError(null);
+      setIsLoading(false);
+      setTotalPages(0);
+      setCache({});
+      setPagesInQueue([]);
     }
   }, [docId]); // Only run when docId changes
 
@@ -82,9 +93,9 @@ const usePdfTranslation = (
         // If total pages hasn't been set yet, set it
         if (totalPages === 0 && response.data.total_pages) {
           setTotalPages(response.data.total_pages);
-        }
-      } catch (err) {
+        }      } catch (err: any) {
         console.error(`Failed to prefetch page ${pageNumber}:`, err);
+        // Don't set error state for prefetch failures, just log them
       } finally {
         // Remove page from queue
         setPagesInQueue((prev) => prev.filter(p => p !== pageNumber));
@@ -92,7 +103,6 @@ const usePdfTranslation = (
     },
     [docId, cache, pagesInQueue, totalPages, sourceLang, targetLang]
   );
-
   const navigateToPage = useCallback(
     async (pageNumber: number) => {
       if (!docId) {
@@ -148,7 +158,18 @@ const usePdfTranslation = (
         }
       } catch (err: any) {
         console.error('Failed to fetch page:', err);
-        setError(err.response?.data?.detail || 'Failed to load page');
+        let errorMessage = 'Failed to load page';
+        
+        if (err.response?.status === 400 || err.response?.status === 404) {
+          // Document not found or invalid
+          errorMessage = err.response?.data?.detail || `Document with ID ${docId} not found`;
+        } else if (err.response?.data?.detail) {
+          errorMessage = err.response.data.detail;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        setError(errorMessage);
         setIsLoading(false);
       }
     },

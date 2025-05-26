@@ -100,6 +100,15 @@ export const closeDocument = async (docId: string): Promise<void> => {
   await axios.delete(`${API_BASE_URL}/pdf/${docId}`);
 };
 
+// Reopen a PDF from history using its stored file path
+export const reopenPdfFromHistory = async (pdfId: string): Promise<UploadResponse> => {
+  const response = await axios.post<UploadResponse>(
+    `${API_BASE_URL}/pdf/reopen/${pdfId}`
+  );
+
+  return response.data;
+};
+
 // PDF History API functions
 
 // Get PDF history

@@ -9,14 +9,18 @@ import useLanguageSelection from '@/hooks/useLanguageSelection';
 
 interface TranslatedViewProps {
   docId: string;
+  pdfId?: string | null; // Original PDF ID for history tracking
   startingPage?: number;
   onProgressUpdate?: (pdfId: string, currentPage: number, totalPages: number) => void;
+  onDocumentNotFound?: (pdfId: string) => void;
 }
 
 const TranslatedView: React.FC<TranslatedViewProps> = ({ 
   docId, 
+  pdfId,
   startingPage = 1,
-  onProgressUpdate 
+  onProgressUpdate,
+  onDocumentNotFound
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<'original' | 'translated'>('original');
@@ -56,17 +60,28 @@ const TranslatedView: React.FC<TranslatedViewProps> = ({
     navigateToPage,
     isPageCached,
     resetCache
-  } = usePdfTranslation(docId, startingPage, { sourceLang, targetLang });
-  
-  // Handle errors in PDF processing
+  } = usePdfTranslation(docId, startingPage, { sourceLang, targetLang });  // Handle errors in PDF processing
   useEffect(() => {
     if (error) {
       setPageLoadError(error);
       console.error("Error loading page:", error);
+      
+      // Check if the error indicates document not found
+      if (error.includes('not found') || error.includes('Document with ID')) {        // Add a shorter delay before automatically cleaning up
+        const timeoutId = setTimeout(() => {
+          if (onDocumentNotFound) {
+            // Use pdfId for history tracking, fallback to docId if pdfId is not available
+            const idForHistory = pdfId || docId;
+            onDocumentNotFound(idForHistory);
+          }
+        }, 1500); // Wait 1.5 seconds before auto-cleanup
+        
+        return () => clearTimeout(timeoutId);
+      }
     } else {
       setPageLoadError(null);
     }
-  }, [error]);
+  }, [error, docId, onDocumentNotFound]);
     // Use our custom navigation hook
   const {
     currentPage,
@@ -84,10 +99,11 @@ const TranslatedView: React.FC<TranslatedViewProps> = ({
       // This will be called whenever the page changes
       setLastAttemptedPage(page);
       navigateToPage(page);
-      
-      // Update progress in history
+        // Update progress in history
       if (onProgressUpdate && totalPages > 0) {
-        onProgressUpdate(docId, page, totalPages);
+        // Use pdfId for history tracking, fallback to docId if pdfId is not available
+        const idForHistory = pdfId || docId;
+        onProgressUpdate(idForHistory, page, totalPages);
       }
     }
   });
@@ -177,47 +193,81 @@ const TranslatedView: React.FC<TranslatedViewProps> = ({
       input.value = currentPage.toString();
     }
   };
-
   if (pageLoadError) {
+    const isDocumentNotFound = pageLoadError.includes('not found') || pageLoadError.includes('Document with ID');
+    
     return (
       <div className="p-8 bg-white dark:bg-neutral-800 rounded-xl shadow-lg border border-neutral-200 dark:border-neutral-700">
         <div className="flex items-center mb-6 text-state-error">
           <svg className="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 8C12.5523 8 13 8.44772 13 9V13C13 13.5523 12.5523 14 12 14C11.4477 14 11 13.5523 11 13V9C11 8.44772 11.4477 8 12 8ZM12 15C11.4477 15 11 15.4477 11 16C11 16.5523 11.4477 17 12 17C12.5523 17 13 16.5523 13 16C13 15.4477 12.5523 15 12 15Z" fill="currentColor" />
           </svg>
-          <h2 className="text-xl font-semibold">Erro ao carregar a página</h2>
+          <h2 className="text-xl font-semibold">
+            {isDocumentNotFound ? 'Documento não encontrado' : 'Erro ao carregar a página'}
+          </h2>
         </div>
         
         <div className="mb-6 p-4 bg-state-errorLight dark:bg-neutral-900 rounded-lg">
-          <p className="text-neutral-800 dark:text-neutral-200">{pageLoadError}</p>
+          {isDocumentNotFound ? (
+            <div>
+              <p className="text-neutral-800 dark:text-neutral-200 mb-3">
+                Este documento não está mais disponível no servidor. Isso pode acontecer quando:
+              </p>
+              <ul className="list-disc list-inside text-neutral-700 dark:text-neutral-300 space-y-1 text-sm">
+                <li>O servidor foi reiniciado</li>
+                <li>O documento expirou ou foi removido</li>
+                <li>Houve um problema de conectividade</li>
+              </ul>
+              <p className="text-neutral-800 dark:text-neutral-200 mt-3">
+                Você precisará fazer o upload do PDF novamente para continuar a tradução.
+              </p>
+            </div>
+          ) : (
+            <p className="text-neutral-800 dark:text-neutral-200">{pageLoadError}</p>
+          )}
         </div>
-        
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={retryPageLoad}
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md transition-colors font-medium shadow-sm flex items-center"
-          >
-            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 4V9H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M20 20V15H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M16.5 7.5C15.5333 6.53333 14.3 6 12.8 6C11.3 6 10.0667 6.53333 9.1 7.5C8.13333 8.46667 7.65 9.7 7.65 11.2C7.65 12.7 8.18333 14 9.25 15.1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M14.3 16.6C13.4333 17.3333 12.4333 17.7 11.3 17.7C9.8 17.7 8.56667 17.1667 7.6 16.1C6.63333 15.0333 6.15 13.8 6.15 12.4C6.15 10.9 6.68333 9.56667 7.75 8.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            Tentar novamente
-          </button>
+          <div className="flex flex-wrap gap-3">
+          {isDocumentNotFound && (            <button
+              onClick={() => onDocumentNotFound && onDocumentNotFound(pdfId || docId)}
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md transition-colors font-medium shadow-sm flex items-center"
+            >
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M21 12C21 16.97 16.97 21 12 21C7.03 21 3 16.97 3 12C3 7.03 7.03 3 12 3C16.97 3 21 7.03 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Fazer upload de novo PDF
+            </button>
+          )}
           
-          <button
-            onClick={() => {
-              resetCache();
-              retryPageLoad();
-            }}
-            className="px-4 py-2 bg-state-error hover:bg-red-600 text-white rounded-md transition-colors font-medium shadow-sm flex items-center"
-          >
-            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 6H21M16 6L15.7294 5.18807C15.4671 4.40125 15.3359 4.00784 15.0927 3.71698C14.8779 3.46013 14.6021 3.26132 14.2905 3.13878C13.9376 3 13.523 3 12.6936 3H11.3064C10.477 3 10.0624 3 9.70951 3.13878C9.39792 3.26132 9.12208 3.46013 8.90729 3.71698C8.66405 4.00784 8.53292 4.40125 8.27064 5.18807L8 6M18 6V18C18 19.1046 17.1046 20 16 20H8C6.89543 20 6 19.1046 6 18V6M10 10V16M14 10V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Limpar cache e tentar novamente
-          </button>
+          {!isDocumentNotFound && (
+            <>
+              <button
+                onClick={retryPageLoad}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md transition-colors font-medium shadow-sm flex items-center"
+              >
+                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 4V9H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M20 20V15H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16.5 7.5C15.5333 6.53333 14.3 6 12.8 6C11.3 6 10.0667 6.53333 9.1 7.5C8.13333 8.46667 7.65 9.7 7.65 11.2C7.65 12.7 8.18333 14 9.25 15.1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M14.3 16.6C13.4333 17.3333 12.4333 17.7 11.3 17.7C9.8 17.7 8.56667 17.1667 7.6 16.1C6.63333 15.0333 6.15 13.8 6.15 12.4C6.15 10.9 6.68333 9.56667 7.75 8.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Tentar novamente
+              </button>
+              
+              <button
+                onClick={() => {
+                  resetCache();
+                  retryPageLoad();
+                }}
+                className="px-4 py-2 bg-state-error hover:bg-red-600 text-white rounded-md transition-colors font-medium shadow-sm flex items-center"
+              >
+                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 6H21M16 6L15.7294 5.18807C15.4671 4.40125 15.3359 4.00784 15.0927 3.71698C14.8779 3.46013 14.6021 3.26132 14.2905 3.13878C13.9376 3 13.523 3 12.6936 3H11.3064C10.477 3 10.0624 3 9.70951 3.13878C9.39792 3.26132 9.12208 3.46013 8.90729 3.71698C8.66405 4.00784 8.53292 4.40125 8.27064 5.18807L8 6M18 6V18C18 19.1046 17.1046 20 16 20H8C6.89543 20 6 19.1046 6 18V6M10 10V16M14 10V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Limpar cache e tentar novamente
+              </button>
+            </>
+          )}
           
           <button
             onClick={() => window.location.reload()}

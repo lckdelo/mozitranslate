@@ -19,7 +19,8 @@ from pdf_processor import (
     extract_text_from_page,
     get_page_count,
     close_document,
-    PDFProcessingError
+    PDFProcessingError,
+    open_pdf
 )
 from pdf_history_db import pdf_history_db
 
@@ -97,10 +98,21 @@ async def upload_pdf(file: UploadFile = File(...)):
         contents = await file.read()
         
         # Save and process the PDF
-        doc_id, _ = save_uploaded_pdf(contents)
+        doc_id, file_path = save_uploaded_pdf(contents)
         
         # Get page count
         page_count = get_page_count(doc_id)
+        
+        # Save to history with file path
+        pdf_data = {
+            'pdf_id': doc_id,
+            'filename': file.filename,
+            'file_path': file_path,
+            'total_pages': page_count,
+            'last_page': 1,
+            'progress': 0.0
+        }
+        pdf_history_db.add_or_update_pdf(pdf_data)
         
         return UploadResponse(
             doc_id=doc_id,
@@ -111,6 +123,43 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
+
+@app.post("/pdf/reopen/{pdf_id}", response_model=UploadResponse)
+async def reopen_pdf_from_history(pdf_id: str):
+    """
+    Reopen a PDF from history using its stored file path
+    """
+    try:
+        # Get PDF data from history
+        pdf_data = pdf_history_db.get_pdf_by_id(pdf_id)
+        
+        if not pdf_data:
+            raise HTTPException(status_code=404, detail="PDF not found in history")
+        
+        file_path = pdf_data.get('file_path')
+        if not file_path:
+            raise HTTPException(status_code=400, detail="File path not found in history")
+        
+        # Check if file still exists
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="PDF file no longer exists at the stored location")
+        
+        # Open the PDF using the stored file path
+        new_doc_id, _ = open_pdf(file_path)
+        
+        # Get page count
+        page_count = get_page_count(new_doc_id)
+        
+        return UploadResponse(
+            doc_id=new_doc_id,
+            page_count=page_count,
+            filename=pdf_data['filename']
+        )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reopen PDF: {str(e)}")
 
 @app.get("/pdf/{doc_id}/page/{page_number}", response_model=PageResponse)
 async def get_page(
