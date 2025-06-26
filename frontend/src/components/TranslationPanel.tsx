@@ -116,16 +116,8 @@ const TranslationPanel: React.FC<TranslationPanelProps> = ({
             <h4 key={index} className="text-xl font-bold mb-4 text-primary-800 dark:text-primary-200 pb-1 leading-tight">
               {title}
             </h4>
-          );        }
-      }
-      
-      // Detect chapter/section numbers (CAPÍTULO I, SEÇÃO 1, etc.)
-      else if (trimmedParagraph.match(/^(CAPÍTULO|SEÇÃO|PARTE|TÍTULO|ARTIGO)\s+[IVX\d]/i)) {
-        return (
-          <h1 key={index} className="text-3xl font-black mb-8 text-center text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600 dark:from-primary-400 dark:to-secondary-400 pb-4 border-b-2 border-primary-300 dark:border-primary-600 uppercase tracking-widest">
-            {trimmedParagraph}
-          </h1>
-        );
+          );
+        }
       }
       
         // Detect uppercase titles (likely headings) with enhanced styling
