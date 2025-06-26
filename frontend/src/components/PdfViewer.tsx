@@ -394,29 +394,8 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
             <span className="text-neutral-400 dark:text-neutral-600">de</span>
             <span className="font-medium">{totalPages}</span>
             
-            {/* Visual page indicators */}
-            <span className="ml-1.5 flex items-center gap-0.5">
-              {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                // Show indicators for first, last, current, and nearby pages
-                const isVisible = i === 0 || i === Math.min(4, totalPages-1) || 
-                  Math.abs(i - (pageNumber-1) % Math.min(5, totalPages)) <= 1;
-                
-                return (
-                  <span 
-                    key={i} 
-                    className={`
-                      w-1.5 h-1.5 rounded-full transition-all duration-300 
-                      ${i === ((pageNumber-1) % Math.min(5, totalPages)) 
-                        ? 'bg-primary-500 scale-125' 
-                        : isVisible 
-                          ? 'bg-neutral-400 dark:bg-neutral-600' 
-                          : 'bg-neutral-300 dark:bg-neutral-700 scale-75 opacity-50'
-                      }
-                    `}
-                  ></span>
-                );
-              })}
-            </span>
+           
+               
           </span>
         </div>
       </div>
